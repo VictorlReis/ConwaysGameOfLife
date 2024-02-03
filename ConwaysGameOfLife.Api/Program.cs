@@ -19,27 +19,29 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapGet("/game/all", async (IGameService GameService) =>
+app.MapGet("/game/all", async (IGameService gameService) =>
 {
     return Results.Ok();
 });
 
-app.MapGet("/game/{gameId}/current", async (IGameService GameService, int gameId) =>
+app.MapGet("/game/{gameId}/current", async (IGameService gameService, int gameId) =>
+{
+    var game = gameService.GetGameVisual(gameId);
+    return Results.Ok(game);
+});
+
+app.MapPost("/game/new", async (IGameService gameService, [FromBody] CreateNewGameDto createNewGameDto) =>
+{
+    var newGameId = await gameService.CreateNewGame(createNewGameDto);
+    return Results.Ok(newGameId);
+});
+
+app.MapPost("/game/{gameId}/next", async (IGameService gameService, int gameId) =>
 {
     return Results.Ok();
 });
 
-app.MapPost("/game/new", async (IGameService GameService, [FromBody] CreateNewGameDto createNewGameDto) =>
-{
-    return Results.Ok();
-});
-
-app.MapPost("/game/{gameId}/next", async (IGameService GameService, int gameId) =>
-{
-    return Results.Ok();
-});
-
-app.MapPost("/game/{gameId}/last", async (IGameService GameService, int gameId) =>
+app.MapPost("/game/{gameId}/last", async (IGameService gameService, int gameId) =>
 {
     return Results.Ok();
 });

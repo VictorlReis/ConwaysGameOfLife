@@ -1,6 +1,9 @@
+using ConwaysGameOfLife.Core.DTOs;
+
 namespace ConwaysGameOfLife.Core.Services;
 
-public class IGameService
-{
-    
+public interface IGameService
+{ 
+    Task<int> CreateNewGame(CreateNewGameDto createNewGameDto);
+    Task<string> GetGameVisual(int gameId);
 }
