@@ -5,7 +5,7 @@ namespace ConwaysGameOfLife.Core;
 
 public sealed class GameContext : DbContext
 {
-    public DbSet<Game> Games { get; set; }
+    public DbSet<Game?> Games { get; set; }
     public DbSet<Cell> CellStates { get; set; }
     public GameContext(DbContextOptions<GameContext> options) : base(options)
     {

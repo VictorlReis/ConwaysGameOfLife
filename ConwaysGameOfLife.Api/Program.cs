@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using ConwaysGameOfLife.Api.Extensions;
 using ConwaysGameOfLife.Core.DTOs;
 using ConwaysGameOfLife.Core.Services;
@@ -19,14 +21,16 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+
 app.MapGet("/game/all", async (IGameService gameService) =>
 {
-    return Results.Ok();
+       var allGames = await gameService.GetAll();
+       return Results.Ok(allGames); 
 });
 
-app.MapGet("/game/{gameId}/current", async (IGameService gameService, int gameId) =>
+app.MapGet("/game/{gameId}", async (IGameService gameService, int gameId) =>
 {
-    var game = gameService.GetGameVisual(gameId);
+    var game = await gameService.Get(gameId);
     return Results.Ok(game);
 });
 

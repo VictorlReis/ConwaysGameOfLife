@@ -1,4 +1,6 @@
+using System.Reflection;
 using ConwaysGameOfLife.Core;
+using ConwaysGameOfLife.Core.Repositories;
 using ConwaysGameOfLife.Core.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,5 +18,6 @@ public static class ApplicationServiceExtensions
         });
 
         services.AddScoped<IGameService, GameService>();
+        services.AddScoped<IGameRepository, GameRepository>();
     }
 }
