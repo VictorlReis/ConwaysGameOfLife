@@ -1,4 +1,7 @@
 using ConwaysGameOfLife.Api.Extensions;
+using ConwaysGameOfLife.Core.DTOs;
+using ConwaysGameOfLife.Core.Services;
+using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,29 +19,29 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
+app.MapGet("/game/all", async (IGameService GameService) =>
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+    return Results.Ok();
+});
 
-app.MapGet("/weatherforecast", () =>
-    {
-        var forecast = Enumerable.Range(1, 5).Select(index =>
-                new WeatherForecast
-                (
-                    DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                    Random.Shared.Next(-20, 55),
-                    summaries[Random.Shared.Next(summaries.Length)]
-                ))
-            .ToArray();
-        return forecast;
-    })
-    .WithName("GetWeatherForecast")
-    .WithOpenApi();
+app.MapGet("/game/{gameId}/current", async (IGameService GameService, int gameId) =>
+{
+    return Results.Ok();
+});
+
+app.MapPost("/game/new", async (IGameService GameService, [FromBody] CreateNewGameDto createNewGameDto) =>
+{
+    return Results.Ok();
+});
+
+app.MapPost("/game/{gameId}/next", async (IGameService GameService, int gameId) =>
+{
+    return Results.Ok();
+});
+
+app.MapPost("/game/{gameId}/last", async (IGameService GameService, int gameId) =>
+{
+    return Results.Ok();
+});
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
