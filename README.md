@@ -1,6 +1,6 @@
-# SearchLocationApi
+# Conways Game Of Life
 ## Description
-This is an API project built with .NET 8 minimal APIs, using Entity Framework, Sqlite and FluentValidation. For the unit tests I used XUnit and Moq.
+This is an API project built with .NET 8 minimal APIs, using Entity Framework and Sqlite. For the unit tests I used XUnit and Moq.
 
 ### Requirements
 .NET 8 SDK
