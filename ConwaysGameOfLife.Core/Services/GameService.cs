@@ -1,17 +1,18 @@
-using ConwaysGameOfLife.Core.DTOs;
 using ConwaysGameOfLife.Core.Entities;
 using ConwaysGameOfLife.Core.Repositories;
 using ConwaysGameOfLife.Core.Requests;
 using ConwaysGameOfLife.Core.Responses;
-using Newtonsoft.Json;
+using Microsoft.Extensions.Options;
 
 namespace ConwaysGameOfLife.Core.Services;
 public class GameService : IGameService
 {
     private readonly IGameRepository _gameRepository;
-    public GameService(IGameRepository repository)
+    private readonly int _maxAttempts;
+    public GameService(IGameRepository repository, IOptions<GameConfigs> config)
     {
         _gameRepository = repository;
+        _maxAttempts = config.Value.MaxAttempts;
     }
     public async Task<AllGamesResponse> GetAll()
     {
@@ -59,10 +60,9 @@ public class GameService : IGameService
               if (game.Finished)
                   return new EndGameResponse("This game has already been finished", 400);
 
-              const int maxAttempts = 10;
               var currentAttempts = 0;
 
-              while (currentAttempts < maxAttempts)
+              while (currentAttempts < _maxAttempts)
               {
                   var cellsAlive = game.Cells.Count(x => x.IsAlive);
 
@@ -79,7 +79,7 @@ public class GameService : IGameService
 
               game.Finished = true;
               await _gameRepository.UpdateGame(game);
-              return new EndGameResponse($"Game with ID {gameId} did not reach a conclusion after {maxAttempts} attempts.", 400);
+              return new EndGameResponse($"Game with ID {gameId} did not reach a conclusion after {_maxAttempts} attempts.", 400);
           }
           catch (Exception e)
           {

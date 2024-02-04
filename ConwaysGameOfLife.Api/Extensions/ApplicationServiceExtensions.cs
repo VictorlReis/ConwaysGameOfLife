@@ -17,6 +17,9 @@ public static class ApplicationServiceExtensions
             options.UseSqlite(connectionString);
         });
 
+        var gameConfigs = configuration.GetSection("GameConfigs");
+        services.Configure<GameConfigs>(gameConfigs);
+        
         services.AddScoped<IGameService, GameService>();
         services.AddScoped<IGameRepository, GameRepository>();
     }
