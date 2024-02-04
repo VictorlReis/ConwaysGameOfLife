@@ -1,68 +1,114 @@
 using ConwaysGameOfLife.Core.DTOs;
 using ConwaysGameOfLife.Core.Entities;
 using ConwaysGameOfLife.Core.Repositories;
+using ConwaysGameOfLife.Core.Requests;
+using ConwaysGameOfLife.Core.Responses;
 using Newtonsoft.Json;
 
 namespace ConwaysGameOfLife.Core.Services;
 public class GameService : IGameService
 {
     private readonly IGameRepository _gameRepository;
-
     public GameService(IGameRepository repository)
     {
         _gameRepository = repository;
     }
-    public async Task<IEnumerable<GameDto>> GetAll()
+    public async Task<AllGamesResponse> GetAll()
     {
-        var games = await _gameRepository.GetAll();
-        return games.Select(x => x.ToDto());
-    }
-
-    public async Task<GameDto?> Get(int gameId)
-    {
-        var game = await _gameRepository.GetGameById(gameId);
-        game.PrintBoard();
-        return game?.ToDto();
-    }
-    public async Task<string> GetGameVisual(int gameId)
-    {
-        var game = await _gameRepository.GetGameById(gameId);
-
-        if (game is null) return $"Game with ID {gameId} not found.";
-        var visualRepresentation = new List<List<string>>();
-
-        for (var i = 0; i < game.Rows; i++)
+        try
         {
-            var rowRepresentation = new List<string>();
-
-            for (var j = 0; j < game.Columns; j++)
-            {
-                var cell = game.Cells.FirstOrDefault(c => c.Row == i && c.Column == j);
-
-                if (cell != null && cell.IsAlive) rowRepresentation.Add("X"); // Alive cell
-                else rowRepresentation.Add("."); // Dead cell
-            }
-            visualRepresentation.Add(rowRepresentation);
+            var games = await _gameRepository.GetAll();
+            var gamesList = games.ToList();
+            return gamesList.Count == 0 ? new AllGamesResponse("No games found", 404) : 
+                new AllGamesResponse(Games: gamesList.Select(x => x.ToDto()));
         }
-
-        var jsonResult = JsonConvert.SerializeObject(visualRepresentation);
-
-        return jsonResult;
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            return new AllGamesResponse("An error occurred while getting the games", 500);
+        }
     }
-
-    public async Task<int> CreateNewGame(CreateNewGameDto createNewGameDto)
-    {
-        var game = new Game();
-        game.InitializeGame(createNewGameDto.BoardRows, createNewGameDto.BoardColumns);
-        var gameId = await _gameRepository.AddGame(game);
-
-        return gameId;
-    }
-    
-    public async Task AdvanceGenerations(int gameId, int generations)
+    public async Task<GameResponse> Get(int gameId)
     {
         var game = await _gameRepository.GetGameById(gameId);
+        return game is null ? new GameResponse("Game not found", 404) : new GameResponse(Game: game.ToDto());
+    }
+    public async Task<CreateNewGameResponse> CreateNewGame(CreateNewGameRequest request)
+    {
+        try
+        {
+            var game = new Game();
+            game.InitializeGame(request.BoardRows, request.BoardColumns);
+            var gameId = await _gameRepository.AddGame(game);
+            return new CreateNewGameResponse(gameId);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            return new CreateNewGameResponse(StatusCode: 500, Message: "An error occurred while creating the game.");
+        }
+    }
+    public async Task<EndGameResponse> EndGame(int gameId)
+    {
+          try
+          {
+              var game = await _gameRepository.GetGameById(gameId);
+              if (game is null)
+                  return new EndGameResponse($"Game with ID {gameId} not found.", 404);
 
+              if (game.Finished)
+                  return new EndGameResponse("This game has already been finished", 400);
+
+              const int maxAttempts = 10;
+              var currentAttempts = 0;
+
+              while (currentAttempts < maxAttempts)
+              {
+                  var cellsAlive = game.Cells.Count(x => x.IsAlive);
+
+                  if (cellsAlive == 0)
+                  {
+                      game.Finished = true;
+                      await _gameRepository.UpdateGame(game);
+                      return new EndGameResponse($"Game with ID {gameId} concluded successfully.", 200);
+                  }
+                  
+                  ProcessGeneration(game, (int)Math.Pow(2, currentAttempts));
+                  currentAttempts++;
+              }
+
+              game.Finished = true;
+              await _gameRepository.UpdateGame(game);
+              return new EndGameResponse($"Game with ID {gameId} did not reach a conclusion after {maxAttempts} attempts.", 400);
+          }
+          catch (Exception e)
+          {
+              Console.WriteLine(e);
+              return new EndGameResponse( "An error occurred while processing the game.", 500);
+          }
+    }
+    public async Task<GameResponse> AdvanceGenerations(AdvanceGenerationsRequest request)
+    {
+        try
+        {
+            var game = await _gameRepository.GetGameById(request.GameId);
+            if (game is null)
+                return new GameResponse( "Game not found", 404);
+            if(game.Finished)
+                  return new GameResponse("This game has already been finished", 400);
+        
+            ProcessGeneration(game, request.Generations);
+            await _gameRepository.UpdateGame(game);
+            return new GameResponse(Game: game.ToDto());
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            return new GameResponse(Message:"An error occurred while advancing to the next generation", StatusCode:500);
+        }
+    }
+    private static void ProcessGeneration(Game game, int generations)
+    {
         while (generations > 0)
         {
             if (game is not { Finished: false }) continue;
@@ -97,6 +143,5 @@ public class GameService : IGameService
             game.Generation++;
             generations--;
         }
-        await _gameRepository.UpdateGame(game);
     }
 }

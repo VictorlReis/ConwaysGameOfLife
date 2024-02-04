@@ -1,7 +1,8 @@
 using ConwaysGameOfLife.Api.Extensions;
-using ConwaysGameOfLife.Core.DTOs;
+using ConwaysGameOfLife.Core.Requests;
 using ConwaysGameOfLife.Core.Services;
 using Microsoft.AspNetCore.Mvc;
+using CreateNewGameRequest = ConwaysGameOfLife.Core.Requests.CreateNewGameRequest;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,38 +22,71 @@ app.UseHttpsRedirection();
 
 app.MapGet("/game/all", async (IGameService gameService) =>
 {
-       var allGames = await gameService.GetAll();
-       return Results.Ok(allGames); 
+   var response = await gameService.GetAll();
+    return response.StatusCode switch
+    {
+        404 => Results.NotFound(response.Message),
+        500 => Results.Problem(response.Message, statusCode:500),
+        _ => Results.Ok(response.Games)
+    };
 });
 
 app.MapGet("/game/{gameId}", async (IGameService gameService, int gameId) =>
 {
-    var game = await gameService.Get(gameId);
-    return Results.Ok(game);
+    var response = await gameService.Get(gameId);
+    return response.StatusCode switch
+    {
+        404 => Results.NotFound(response.Message),
+        500 => Results.Problem(response.Message, statusCode:500),
+        _ => Results.Ok(response.Game)
+    };
 });
 
-app.MapPost("/game/new", async (IGameService gameService, [FromBody] CreateNewGameDto createNewGameDto) =>
+app.MapPost("/game/new", async (IGameService gameService, [FromBody] CreateNewGameRequest createNewGameRequest) =>
 {
-    var newGameId = await gameService.CreateNewGame(createNewGameDto);
-    return Results.Ok(newGameId);
+    var response = await gameService.CreateNewGame(createNewGameRequest);
+    return response.StatusCode switch
+    {
+        500 => Results.Problem(response.Message, statusCode:500),
+        _ => Results.Ok(response.GameId)
+    };
 });
 
 app.MapPost("/game/{gameId}/next", async (IGameService gameService, int gameId) =>
 {
-    await gameService.AdvanceGenerations(gameId);
-    return Results.Ok();
+    var response = await gameService.AdvanceGenerations(new AdvanceGenerationsRequest(gameId));
+    return response.StatusCode switch
+    {
+        400 => Results.BadRequest(response.Message),
+        404 => Results.NotFound(response.Message),
+        500 => Results.Problem(response.Message, statusCode:500),
+        _ => Results.Ok(response.Game)
+    };
 });
 
 
-app.MapPost("/game/{gameId}/next/{generations}", async (IGameService gameService, int gameId, int generations) =>
+app.MapPost("/game/{gameId}/next/{generations}", async (IGameService gameService, AdvanceGenerationsRequest request) =>
 {
-    await gameService.AdvanceGenerations(gameId, generations);
-    return Results.Ok();
+    var response = await gameService.AdvanceGenerations(request);
+    return response.StatusCode switch
+    {
+        400 => Results.BadRequest(response.Message),
+        404 => Results.NotFound(response.Message),
+        500 => Results.Problem(response.Message, statusCode:500),
+        _ => Results.Ok(response.Game)
+    };
 });
 
-app.MapPost("/game/{gameId}/last", async (IGameService gameService, int gameId) =>
+app.MapPost("/game/{gameId}/end", async (IGameService gameService, int gameId) =>
 {
-    return Results.Ok();
+    var response = await gameService.EndGame(gameId);
+    return response.StatusCode switch
+    {
+        400 => Results.BadRequest(response.Message),
+        404 => Results.NotFound(response.Message),
+        500 => Results.Problem(response.Message, statusCode:500),
+        _ => Results.Ok(response.Message)
+    };
 });
 
 app.Run();
