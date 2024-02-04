@@ -25,17 +25,14 @@ public class GameServiceTests
     [Fact]
     public async Task GetAll_ReturnsAllGames()
     {
-        // Arrange
         var game1 = new Game { Id = 1, Rows = 3, Columns = 3, Finished = false, Cells = new List<Cell>()};
         var game2 = new Game { Id = 2, Rows = 4, Columns = 4, Finished = false, Cells = new List<Cell>()};
         var games = new List<Game> { game1, game2 };
 
         _gameRepository.Setup(x => x.GetAll()).ReturnsAsync(games);
 
-        // Act
         var result = await _sut.GetAll();
 
-        // Assert
         Assert.Null(result.Message);
         Assert.Equal(200, result.StatusCode);
         Assert.NotNull(result.Games);
@@ -50,6 +47,16 @@ public class GameServiceTests
         Assert.Equal(game2.Id, gameDtos[1].Id);
         Assert.Equal(game2.Rows, gameDtos[1].Rows);
         Assert.Equal(game2.Columns, gameDtos[1].Columns);
+    }
+    [Fact]
+    public async Task GetAll_WhenEmpty_Returns404()
+    {
+        _gameRepository.Setup(x => x.GetAll()).ReturnsAsync(new List<Game>());
+        var result = await _sut.GetAll();
+
+        Assert.Null(result.Games);
+        Assert.Equal(404, result.StatusCode);
+        Assert.Equal("No games found",result.Message);
     }
     [Fact]
     public async Task CreateNewGame_Success()
