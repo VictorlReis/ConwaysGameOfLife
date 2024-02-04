@@ -10,8 +10,6 @@ public class Game
     public int Columns { get; set; }
     public int Generation { get; set; }
     public bool Finished { get; set; }
-
-    
     
     public void InitializeGame(int rows, int columns)
     {
