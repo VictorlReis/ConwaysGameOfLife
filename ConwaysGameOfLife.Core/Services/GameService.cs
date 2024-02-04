@@ -36,6 +36,8 @@ public class GameService : IGameService
     }
     public async Task<CreateNewGameResponse> CreateNewGame(CreateNewGameRequest request)
     {
+        if (request.BoardColumns <= 0 || request.BoardRows <= 0)
+            return new CreateNewGameResponse(StatusCode: 404, Message: "Invalid Columns or Rows");
         try
         {
             var game = new Game();

@@ -24,10 +24,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Services" />
-    </ItemGroup>
-
-    <ItemGroup>
       <ProjectReference Include="..\ConwaysGameOfLife.Core\ConwaysGameOfLife.Core.csproj" />
     </ItemGroup>
 

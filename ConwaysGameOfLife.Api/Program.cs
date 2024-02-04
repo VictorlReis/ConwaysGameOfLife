@@ -1,3 +1,4 @@
+using System.Net;
 using ConwaysGameOfLife.Api.Extensions;
 using ConwaysGameOfLife.Core.Requests;
 using ConwaysGameOfLife.Core.Services;
@@ -48,7 +49,7 @@ app.MapPost("/game/new", async (IGameService gameService, [FromBody] CreateNewGa
     return response.StatusCode switch
     {
         500 => Results.Problem(response.Message, statusCode:500),
-        _ => Results.Ok(response.GameId)
+        _ => Results.Created($"/games/{response.GameId}", response.GameId)
     };
 });
 
