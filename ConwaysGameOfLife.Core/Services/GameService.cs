@@ -1,7 +1,6 @@
 using ConwaysGameOfLife.Core.DTOs;
 using ConwaysGameOfLife.Core.Entities;
 using ConwaysGameOfLife.Core.Repositories;
-using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 
 namespace ConwaysGameOfLife.Core.Services;
@@ -16,64 +15,57 @@ public class GameService : IGameService
     public async Task<IEnumerable<GameDto>> GetAll()
     {
         var games = await _gameRepository.GetAll();
-        return games.Select(game => game.ToDto()).ToList();
+        return games.Select(x => x.ToDto());
     }
 
     public async Task<GameDto?> Get(int gameId)
     {
         var game = await _gameRepository.GetGameById(gameId);
+        game.PrintBoard();
         return game?.ToDto();
     }
     public async Task<string> GetGameVisual(int gameId)
     {
         var game = await _gameRepository.GetGameById(gameId);
 
-        if (game != null)
+        if (game is null) return $"Game with ID {gameId} not found.";
+        var visualRepresentation = new List<List<string>>();
+
+        for (var i = 0; i < game.Rows; i++)
         {
-            var visualRepresentation = new List<List<string>>();
+            var rowRepresentation = new List<string>();
 
-            for (var i = 0; i < game.Rows; i++)
+            for (var j = 0; j < game.Columns; j++)
             {
-                var rowRepresentation = new List<string>();
+                var cell = game.Cells.FirstOrDefault(c => c.Row == i && c.Column == j);
 
-                for (var j = 0; j < game.Columns; j++)
-                {
-                    var cell = game.Cells.FirstOrDefault(c => c.Row == i && c.Column == j);
-
-                    if (cell != null && cell.IsAlive)
-                    {
-                        rowRepresentation.Add("X"); // Alive cell
-                    }
-                    else
-                    {
-                        rowRepresentation.Add("."); // Dead cell
-                    }
-                }
-
-                visualRepresentation.Add(rowRepresentation);
+                if (cell != null && cell.IsAlive) rowRepresentation.Add("X"); // Alive cell
+                else rowRepresentation.Add("."); // Dead cell
             }
-
-            var jsonResult = JsonConvert.SerializeObject(visualRepresentation);
-
-            return jsonResult;
+            visualRepresentation.Add(rowRepresentation);
         }
 
-        return $"Game with ID {gameId} not found.";
+        var jsonResult = JsonConvert.SerializeObject(visualRepresentation);
+
+        return jsonResult;
     }
 
     public async Task<int> CreateNewGame(CreateNewGameDto createNewGameDto)
     {
-        var game = new Game(createNewGameDto.BoardRows, createNewGameDto.BoardColumns);
+        var game = new Game();
+        game.InitializeGame(createNewGameDto.BoardRows, createNewGameDto.BoardColumns);
         var gameId = await _gameRepository.AddGame(game);
 
         return gameId;
     }
-    public async Task NextGeneration(int gameId)
+    
+    public async Task AdvanceGenerations(int gameId, int generations)
     {
         var game = await _gameRepository.GetGameById(gameId);
 
-        if (game is { Finished: false })
+        while (generations > 0)
         {
+            if (game is not { Finished: false }) continue;
             var newGenerationCells = new List<Cell>();
 
             foreach (var cell in game.Cells)
@@ -103,8 +95,8 @@ public class GameService : IGameService
 
             game.Cells = newGenerationCells;
             game.Generation++;
-
-            await _gameRepository.UpdateGame(game);
+            generations--;
         }
+        await _gameRepository.UpdateGame(game);
     }
 }

@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
 using ConwaysGameOfLife.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,7 +21,7 @@ namespace ConwaysGameOfLife.Core.Repositories
 
         public async Task<IEnumerable<Game>> GetAll()
         {
-            return await _context.Games.ToListAsync();
+            return await _context.Games.Include(g => g.Cells).ToListAsync();
         }
 
         public async Task<int> AddGame(Game game)

@@ -11,7 +11,9 @@ public class Game
     public int Generation { get; set; }
     public bool Finished { get; set; }
 
-    public Game(int rows, int columns)
+    
+    
+    public void InitializeGame(int rows, int columns)
     {
         Rows = rows;
         Columns = columns;
@@ -20,7 +22,22 @@ public class Game
         GenerateRandomCells();
     }
     
-    public GameDto? ToDto() => new(Id, Rows, Columns, Generation, Finished, Cells.Count(cell => cell.IsAlive));
+    public void PrintBoard()
+    {
+        for (var i = 0; i < Rows; i++)
+        {
+            for (var j = 0; j < Columns; j++)
+            {
+                Cell cell = Cells.FirstOrDefault(c => c.Row == i && c.Column == j);
+
+                var cellSymbol = cell?.IsAlive == true ? 'X' : '.';
+                Console.Write(cellSymbol + " ");
+            }
+            Console.WriteLine();
+        }
+    }
+
+    public GameDto? ToDto() => new(Id, Rows, Columns, Generation, Finished, Cells.Select(x => x.ToDto()));
     
     public int CountLiveNeighbors(int row, int column)
     {
@@ -33,10 +50,8 @@ public class Game
                 if (i == row && j == column) continue;
 
                 var neighbor = Cells.FirstOrDefault(c => c.Row == i && c.Column == j);
-                if (neighbor is { IsAlive: true })
-                {
-                    liveNeighbors++;
-                }
+                
+                if (neighbor is { IsAlive: true }) liveNeighbors++;
             }
         }
 

@@ -1,3 +1,5 @@
+using ConwaysGameOfLife.Core.DTOs;
+
 namespace ConwaysGameOfLife.Core.Entities;
 public class Cell
 {
@@ -8,4 +10,6 @@ public class Cell
     public bool IsAlive { get; set; }
     
     public Game Game { get; set; }
+
+    public CellDto ToDto() => new (Id, GameId, Row, Column, IsAlive);
 }
